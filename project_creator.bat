@@ -1,26 +1,26 @@
 @echo off
 setlocal enabledelayedexpansion
-call :GET_PARAMS "%~f0" "%~f1" "%~f2" PROJECTS_DIR TEMPLATE_DIR
-call :DEFINE_FOLDER "%PROJECTS_DIR%" PROJECT_DIR_SELECTED
+call :GET_PARAMS "%~f0" "%~f1" "%~f2"
+call :DEFINE_FOLDER "%~f1" PROJECT_DIR_SELECTED
 call :DEFINE_PROJECT_NAME PROJECT_NAME
-call :CREATE_FOLDER "%PROJECTS_DIR%" "%PROJECT_DIR_SELECTED%" "%PROJECT_NAME%"
-call :COPY_TEMPLATE_FILES "%PROJECTS_DIR%" "%TEMPLATE_DIR%" "%PROJECT_DIR_SELECTED%" "%PROJECT_NAME%"
+call :CREATE_FOLDER "%~f1" "%PROJECT_DIR_SELECTED%" "%PROJECT_NAME%"
+call :COPY_TEMPLATE_FILES "%~f1" "%~f2" "%PROJECT_DIR_SELECTED%" "%PROJECT_NAME%"
 endlocal
 goto :EOF
 
 :GET_PARAMS
     setlocal
     set PARAMS_FAIL=0
-    if [%~2] EQU [] (
+    if "%~2" EQU "" (
        set PARAMS_FAIL=1
     )
-    if [%~3] EQU [] (
+    if "%~3" EQU "" (
        set PARAMS_FAIL=1
     )
     if %PARAMS_FAIL% EQU 1 (
         call :CREATE_SHORTCUT "%~1"
     )
-    endlocal & (set %~4=%~2) & (set %~5=%~3)
+    endlocal
 goto :EOF
 
 :CREATE_SHORTCUT
@@ -101,7 +101,7 @@ goto :EOF
 :GET_DATE
     setlocal
     for /F "tokens=2 delims==" %%a in ('wmic os get localdatetime /value') do set datetime=%%a
-    set year=%datetime:~0,4%
+    set year=%datetime:~2,4%
     set month=%datetime:~4,2%
     set day=%datetime:~6,2%
     endlocal & set %~1=%year% %month% %day%
