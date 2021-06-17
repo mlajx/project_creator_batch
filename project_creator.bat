@@ -1,38 +1,74 @@
 @echo off
 setlocal enabledelayedexpansion
-
-call :GET_PARAMS "%~f1" "%~f2" PROJECTS_DIR TEMPLATE_DIR
+call :GET_PARAMS "%~f0" "%~f1" "%~f2" PROJECTS_DIR TEMPLATE_DIR
 call :DEFINE_FOLDER "%PROJECTS_DIR%" PROJECT_DIR_SELECTED
 call :DEFINE_PROJECT_NAME PROJECT_NAME
 call :CREATE_FOLDER "%PROJECTS_DIR%" "%PROJECT_DIR_SELECTED%" "%PROJECT_NAME%"
 call :COPY_TEMPLATE_FILES "%PROJECTS_DIR%" "%TEMPLATE_DIR%" "%PROJECT_DIR_SELECTED%" "%PROJECT_NAME%"
-
 endlocal
 goto :EOF
 
 :GET_PARAMS
     setlocal
     set PARAMS_FAIL=0
-    if [%~1] EQU [] (
-       set PARAMS_FAIL=1
-    )
     if [%~2] EQU [] (
        set PARAMS_FAIL=1
     )
-    if %PARAMS_FAIL% EQU 1 (
-        call :SHOW_ERROR
+    if [%~3] EQU [] (
+       set PARAMS_FAIL=1
     )
-    endlocal & (set %~3=%~1) & (set %~4=%~2)
+    if %PARAMS_FAIL% EQU 1 (
+        call :CREATE_SHORTCUT "%~1"
+    )
+    endlocal & (set %~4=%~2) & (set %~5=%~3)
 goto :EOF
 
-:SHOW_ERROR
-    echo.
-    echo.
-    echo Por favor defina o caminho dos projetos no atalho do programa
-    echo.
-    echo Ex. "...project_creator.bar\" ".\projects" ".\templates"
-    echo.
-    echo.
+:CREATE_SHORTCUT
+    setlocal
+    cls
+    set /P SHORTCUT_NAME=Nome do atalho (Project Creator): 
+    if not defined SHORTCUT_NAME (
+       set SHORTCUT_NAME=Project Creator
+    )
+
+    set /P SHORTCUT_DIR=Diretorio do atalho (%USERPROFILE%\Desktop): 
+	if not defined SHORTCUT_DIR (
+       set SHORTCUT_DIR=%USERPROFILE%\Desktop
+    )
+
+    :DEFINE_PROJECTS_DIR_INIT
+    set /P PROJECTS_DIR=Diretorio dos projetos (Obrigatorio): 
+	if not defined PROJECTS_DIR (
+       goto :DEFINE_PROJECTS_DIR_INIT
+    )
+
+    :DEFINE_TEMPLATE_DIR_INIT
+    set /P TEMPLATE_DIR=Diretorio do template (Obrigatorio): 
+	if not defined TEMPLATE_DIR (
+       goto :DEFINE_TEMPLATE_DIR_INIT
+    )
+   
+    set /P HOTKEY=Defina uma hotkey (Ex. Ctrl+Alt+e): 
+    set /P ICON=Defina um icone (.ico): 
+
+    set SCRIPT="%TEMP%\%RANDOM%-%RANDOM%-%RANDOM%-%RANDOM%.vbs"
+    
+    echo Set oWS = WScript.CreateObject("WScript.Shell") >> %SCRIPT%
+    echo sLinkFile = "%SHORTCUT_DIR%\%SHORTCUT_NAME%.lnk" >> %SCRIPT%
+    echo Set oLink = oWS.CreateShortcut(sLinkFile) >> %SCRIPT%
+    echo oLink.TargetPath = "%~1" >> %SCRIPT%
+    echo oLink.Arguments = """%PROJECTS_DIR%"" ""%TEMPLATE_DIR%""" >> %SCRIPT%
+    if defined HOTKEY (
+       echo oLink.Hotkey = "%HOTKEY%" >> %SCRIPT%
+    )
+    if defined ICON (
+       echo oLink.IconLocation = "%ICON%, 0" >> %SCRIPT%
+    )
+    echo oLink.Save >> %SCRIPT%
+    
+    cscript /nologo %SCRIPT%
+    del %SCRIPT%
+    endlocal
 exit
 
 :DEFINE_FOLDER
@@ -40,7 +76,6 @@ exit
     :DEFINE_FOLDER_INIT
     cls
     set PROJECTS_COUNTER=1
-    echo "%~1"
     for /F "delims=" %%a in ('dir /B /AD "%~1"') do (
         echo !PROJECTS_COUNTER!. %%a
         set PROJECT_!PROJECTS_COUNTER!=%%a
