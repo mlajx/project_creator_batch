@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+chcp 1252
 call :GET_PARAMS "%~f0" "%~f1" "%~f2"
 call :DEFINE_FOLDER "%~f1" PROJECT_DIR_SELECTED
 call :DEFINE_PROJECT_NAME PROJECT_NAME
